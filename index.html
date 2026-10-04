@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio Autonome</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout : document lisible en une colonne (~760px), une élévation de rack dessinée en CSS comme pièce centrale, tableaux de matériel en lignes empilables. */
+:root{
+  --bg:#F4F5F7; --surface:#FFFFFF; --ink:#151920; --muted:#59606D; --line:#DCE0E6;
+  --accent:#2350B8; --accent-soft:#E6ECF9; --tally:#D3263A; --ok:#1E8556; --warn:#A86D12;
+  --rack:#1D222A; --rack-unit:#2A303A; --rack-ear:#3A414D; --rack-text:#E6E9EE; --rack-dim:#9AA2AE;
+  --display:"Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0F1217; --surface:#171B22; --ink:#E6E9EE; --muted:#9AA3B0; --line:#2A303A;
+    --accent:#86A6F0; --accent-soft:#1C2741; --tally:#FF5D6C; --ok:#4FC28C; --warn:#E2AA4C;
+    --rack:#0B0D11; --rack-unit:#1F242C; --rack-ear:#2E343E; --rack-text:#E6E9EE; --rack-dim:#8E97A4;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0F1217; --surface:#171B22; --ink:#E6E9EE; --muted:#9AA3B0; --line:#2A303A;
+  --accent:#86A6F0; --accent-soft:#1C2741; --tally:#FF5D6C; --ok:#4FC28C; --warn:#E2AA4C;
+  --rack:#0B0D11; --rack-unit:#1F242C; --rack-ear:#2E343E; --rack-text:#E6E9EE; --rack-dim:#8E97A4;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;padding-inline:16px;padding-block:0 64px}
+.wrap{max-width:820px;margin:0 auto}
+h1,h2,h3{font-family:var(--display);line-height:1.15;text-wrap:balance;margin:0}
+h1{font-size:clamp(2.2rem,6vw,3.4rem);font-weight:700;letter-spacing:-.01em}
+h2{font-size:1.75rem;font-weight:700}
+h3{font-size:1.15rem;font-weight:700}
+p{margin:0}
+.mono{font-family:var(--mono)}
+.num{font-variant-numeric:tabular-nums}
+a{color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+
+/* Hero */
+.hero{padding-block:56px 32px;display:grid;gap:20px}
+.eyebrow{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.tally{display:inline-flex;align-items:center;gap:6px;color:var(--tally);font-weight:500}
+.tally::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--tally)}
+.lead{font-size:1.15rem;color:var(--muted);max-width:62ch}
+.facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-top:8px}
+.facts div{background:var(--surface);padding:14px 16px;display:grid;gap:2px}
+.facts dt{font-size:.78rem;color:var(--muted)}
+.facts dd{margin:0;font-family:var(--display);font-weight:700;font-size:1.3rem}
+@media (max-width:640px){.facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+nav.toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-inline:-16px;padding-inline:16px}
+nav.toc ul{max-width:820px;margin:0 auto;padding:10px 0;list-style:none;display:flex;gap:18px;overflow-x:auto;white-space:nowrap;font-size:.9rem;scrollbar-width:none}
+nav.toc a{color:var(--muted);text-decoration:none}
+nav.toc a:hover{color:var(--ink)}
+
+section{padding-block:48px 8px;display:grid;gap:18px}
+section > p, .prose p{max-width:68ch}
+.kicker{font-family:var(--mono);font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.head{display:grid;gap:6px}
+
+/* Flux */
+.flow{display:grid;grid-template-columns:1fr auto 1.3fr auto 1fr;gap:10px;align-items:stretch}
+.flow .box{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px;display:grid;gap:6px;align-content:start;min-width:0}
+.flow .box.core{border-color:var(--accent);background:var(--accent-soft)}
+.flow .box ul{margin:0;padding-left:18px;font-size:.92rem;color:var(--muted)}
+.flow .arrow{align-self:center;color:var(--muted);font-family:var(--mono)}
+@media (max-width:700px){.flow{grid-template-columns:1fr}.flow .arrow{justify-self:center;transform:rotate(90deg)}}
+
+/* Session */
+ol.steps{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:s}
+ol.steps li{counter-increment:s;display:grid;grid-template-columns:44px 1fr;gap:12px;padding:14px 0;border-top:1px solid var(--line)}
+ol.steps li:last-child{border-bottom:1px solid var(--line)}
+ol.steps li::before{content:counter(s);font-family:var(--mono);font-weight:500;color:var(--accent);font-size:1.05rem}
+ol.steps strong{display:block}
+ol.steps span{color:var(--muted);font-size:.95rem}
+
+/* Rack */
+.rack-grid{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:28px;align-items:start}
+@media (max-width:760px){.rack-grid{grid-template-columns:1fr}}
+.rack{background:var(--rack);border-radius:8px;padding:10px 0;color:var(--rack-text);font-size:.85rem}
+.rack .top{margin:0 10px 10px;padding:10px 12px;border:1px dashed var(--rack-ear);border-radius:6px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.rack .top b{font-weight:600}
+.rack .top small{color:var(--rack-dim)}
+.u{display:grid;grid-template-columns:34px 1fr 34px;align-items:stretch;min-height:30px}
+.u.h2{min-height:62px}
+.u .ear{background:var(--rack-ear);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.68rem;color:var(--rack-dim)}
+.u .body{background:var(--rack-unit);margin:1px 2px;border-radius:3px;padding:6px 10px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.u .body small{color:var(--rack-dim);font-family:var(--mono);font-size:.7rem;white-space:nowrap}
+.u .body.empty{background:transparent;border:1px dashed var(--rack-ear)}
+.u .led{width:7px;height:7px;border-radius:50%;background:var(--ok);flex:none}
+.u .led.rec{background:var(--tally)}
+.rack-notes{display:grid;gap:14px}
+.rack-notes p{color:var(--muted);font-size:.95rem}
+.rack-notes strong{color:var(--ink)}
+
+/* Matériel */
+.cat{background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cat header{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:14px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.cat header p{color:var(--muted);font-size:.9rem;flex-basis:100%}
+.cat .sum{font-family:var(--mono);font-weight:500}
+.item{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 18px;padding:12px 18px;border-top:1px solid var(--line)}
+.item:first-of-type{border-top:0}
+.item .name{font-weight:600}
+.item .qty{font-family:var(--mono);font-size:.85rem;color:var(--muted);white-space:nowrap;text-align:right}
+.item .price{font-family:var(--mono);font-weight:500;white-space:nowrap;text-align:right;min-width:7ch}
+.item .why{grid-column:1 / -1;color:var(--muted);font-size:.92rem;max-width:70ch}
+@media (max-width:520px){.item{grid-template-columns:minmax(0,1fr) auto}.item .qty{grid-column:1;text-align:left;grid-row:2}.item .price{grid-row:1 / span 2;align-self:start}}
+.total{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:18px;border:2px solid var(--ink);border-radius:12px;flex-wrap:wrap}
+.total .label{font-family:var(--display);font-weight:700;font-size:1.2rem}
+.total .amount{font-family:var(--mono);font-size:1.5rem;font-weight:500}
+.total p{flex-basis:100%;color:var(--muted);font-size:.9rem}
+.note{border-left:3px solid var(--warn);padding:10px 14px;background:var(--surface);border-radius:0 8px 8px 0;font-size:.95rem}
+.note strong{color:var(--warn)}
+table{border-collapse:collapse;width:100%;font-size:.93rem}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+th,td{text-align:left;padding:10px 14px;border-top:1px solid var(--line);vertical-align:top}
+thead th{border-top:0;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;font-family:var(--mono)}
+td.r,th.r{text-align:right;white-space:nowrap;font-family:var(--mono)}
+tfoot td{font-weight:600;border-top:2px solid var(--line)}
+td .sub{display:block;color:var(--muted);font-size:.86rem}
+code{font-family:var(--mono);font-size:.86em;background:var(--accent-soft);padding:1px 5px;border-radius:4px}
+
+/* Planning */
+.phases{display:grid;gap:12px}
+.phase{display:grid;grid-template-columns:120px minmax(0,1fr);gap:16px;padding:16px 0;border-top:1px solid var(--line)}
+.phase .when{font-family:var(--mono);font-size:.85rem;color:var(--accent)}
+.phase .when b{display:block;color:var(--ink);font-family:var(--display);font-size:1.05rem}
+.phase p{color:var(--muted);font-size:.95rem}
+.phase .done{margin-top:6px;font-size:.92rem}
+.phase .done::before{content:"Livrable : ";font-weight:600;color:var(--ok)}
+@media (max-width:560px){.phase{grid-template-columns:1fr;gap:6px}}
+
+.offers{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+@media (max-width:640px){.offers{grid-template-columns:1fr}}
+.offer{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:grid;gap:8px;align-content:start}
+.offer .tag{font-family:var(--mono);font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.offer p{color:var(--muted);font-size:.94rem}
+.chips{display:flex;flex-wrap:wrap;gap:8px;list-style:none;padding:0;margin:0}
+.chips li{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:4px 12px;font-size:.88rem}
+
+.risks{display:grid;gap:0}
+.risk{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:16px;padding:14px 0;border-top:1px solid var(--line)}
+.risk:last-child{border-bottom:1px solid var(--line)}
+.risk p{color:var(--muted);font-size:.94rem}
+@media (max-width:560px){.risk{grid-template-columns:1fr;gap:4px}}
+
+ul.check{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+ul.check li{display:grid;grid-template-columns:22px 1fr;gap:8px}
+ul.check li::before{content:"";width:14px;height:14px;border:2px solid var(--accent);border-radius:3px;margin-top:5px}
+
+.video{aspect-ratio:16/9;max-width:100%;border-radius:12px;overflow:hidden;background:var(--rack);border:1px solid var(--line)}
+.video iframe{width:100%;height:100%;border:0;display:block}
+.caption{color:var(--muted);font-size:.85rem}
+[hidden]{display:none!important}
+.rates{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 16px;background:var(--surface);border:1px solid var(--line);border-radius:10px;font-size:.92rem}
+.rates input{width:7.5em;font:inherit;font-family:var(--mono);padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+.rates input:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.rates span{margin-right:12px;color:var(--muted)}
+.rates small{flex-basis:100%;color:var(--muted)}
+.item .fx{grid-column:1 / -1;font-family:var(--mono);font-size:.8rem;color:var(--muted)}
+.total .fx{flex-basis:100%;font-family:var(--mono);color:var(--muted)}
+.facts .sub-dd{margin:0;font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+@media (prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
+
+/* ===== Mise en page document : sommaire latéral + articles numérotés ===== */
+:root{
+  --bg:#EEF0EC; --surface:#F7F8F5; --ink:#1B2124; --muted:#5E6763; --line:#D3D9D2;
+  --accent:#1F625C; --accent-soft:#DCE8E4;
+  --display:"Archivo", "Segoe UI", system-ui, sans-serif;
+  --body:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --sans:"Archivo", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#121614; --surface:#1A1F1D; --ink:#E4E8E4; --muted:#9BA5A0; --line:#2C3431;
+    --accent:#72C2B6; --accent-soft:#1C2E2A;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121614; --surface:#1A1F1D; --ink:#E4E8E4; --muted:#9BA5A0; --line:#2C3431;
+  --accent:#72C2B6; --accent-soft:#1C2E2A;
+}
+body{font-size:17px;line-height:1.65}
+.wrap{max-width:1180px}
+h1{font-size:clamp(2.4rem,7vw,3.6rem);font-weight:800;letter-spacing:-.025em}
+h2{font-size:1.45rem;font-weight:700;letter-spacing:-.01em}
+h3{font-family:var(--sans);font-size:1.02rem;font-weight:700}
+
+.hero{padding-block:48px 0;gap:18px}
+.lead{font-size:1.12rem;max-width:58ch}
+.meta{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));margin:14px 0 0;border-top:1px solid var(--line);border-bottom:2px solid var(--ink)}
+.meta div{padding:16px 16px 20px 0;display:grid;gap:4px;align-content:start;min-width:0}
+.meta div + div{padding-left:16px;border-left:1px solid var(--line)}
+.meta dt{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.meta dd{margin:0;font-family:var(--sans);font-weight:600;font-size:1rem}
+.meta .sub-dd{font-family:var(--mono);font-weight:400;font-size:.74rem;color:var(--muted)}
+@media (max-width:900px){
+  .meta{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .meta div{padding:14px 12px 14px 0;border-top:1px solid var(--line)}
+  .meta div + div{padding-left:0;border-left:0}
+  .meta div:nth-child(even){padding-left:14px;border-left:1px solid var(--line)}
+  .meta div:nth-child(-n+2){border-top:0}
+}
+
+.layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:56px;align-items:start;padding-top:40px}
+.toc{position:sticky;top:calc(env(safe-area-inset-top,0px) + 24px);max-height:calc(100vh - 48px);overflow-y:auto}
+.toc summary{list-style:none;cursor:default;font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-bottom:12px}
+.toc summary::-webkit-details-marker{display:none}
+.toc .toc-current{display:none}
+.toc ol{list-style:none;margin:0;padding:0;display:grid}
+.toc a{display:flex;gap:12px;align-items:baseline;padding:9px 12px;border-left:2px solid var(--line);color:var(--muted);text-decoration:none;font-family:var(--sans);font-size:.92rem;line-height:1.3}
+.toc a .n{font-family:var(--mono);font-size:.75rem;color:var(--muted);opacity:.8}
+.toc a:hover{color:var(--ink)}
+.toc a.active{border-left-color:var(--accent);color:var(--ink);font-weight:600;background:var(--accent-soft)}
+.toc a.active .n{color:var(--accent);opacity:1}
+
+.content{min-width:0}
+.content section{padding-block:8px 48px;gap:18px;scroll-margin-top:24px}
+.content section + section{border-top:1px solid var(--line);padding-top:40px}
+.head{display:flex;align-items:baseline;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.artnum{font-family:var(--mono);font-size:.78rem;letter-spacing:.06em;color:var(--accent);white-space:nowrap}
+.artnum::before{content:"ART. "}
+.content section > p,.content .item .why,.content .caption{max-width:none}
+
+/* Données en sans-serif pour la lisibilité */
+table,.item,.cat header,.offer,.rates,.total,.phase .when,.risk strong,.flow,.rack,ol.steps strong,.chips{font-family:var(--sans)}
+.offer p,.risk p,.phase p,ol.steps span,.item .why,.rack-notes p{font-family:var(--body)}
+
+footer{margin-top:24px}
+
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr;gap:0;padding-top:24px}
+  .toc{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;max-height:none;overflow:visible;background:var(--bg);margin-inline:-16px;padding-inline:16px;border-bottom:1px solid var(--line)}
+  .toc details{position:relative}
+  .toc summary{cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 0;font-size:.72rem}
+  .toc summary::after{content:"▾";margin-left:auto;font-size:1.2rem;color:var(--ink);transition:transform .2s}
+  .toc details[open] summary::after{transform:rotate(180deg)}
+  .toc .toc-current{display:inline;font-family:var(--sans);font-size:.9rem;letter-spacing:0;text-transform:none;color:var(--ink);font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+  .toc ol{position:absolute;left:-16px;right:-16px;top:100%;background:var(--bg);border-bottom:1px solid var(--line);padding:4px 16px 12px;max-height:70vh;overflow-y:auto;box-shadow:0 12px 24px -12px rgba(0,0,0,.25)}
+  .content section{scroll-margin-top:60px}
+  .head{flex-direction:column;gap:4px}
+}
+
+/* ===== Liste de matériel ===== */
+.mat{display:grid;gap:40px}
+.mat-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:4px 14px;padding-bottom:12px;border-bottom:2px solid var(--ink)}
+.mat-num{font-family:var(--mono);font-size:.8rem;color:var(--accent)}
+.mat-head h3{font-family:var(--display);font-size:1.3rem;font-weight:700;letter-spacing:-.01em}
+.mat-sum{display:grid;justify-items:end;gap:2px}
+.mat-sum b{font-family:var(--mono);font-size:1.15rem;font-weight:500}
+.mat-sum small{font-family:var(--mono);font-size:.74rem;color:var(--muted);white-space:nowrap}
+.mat-head p{grid-column:2 / -1;font-family:var(--body);font-size:.95rem;color:var(--muted)}
+.mat-row{display:grid;grid-template-columns:minmax(0,1fr) 3.5rem 7rem 9.5rem;gap:4px 16px;padding:14px 0;border-bottom:1px solid var(--line);align-items:start}
+.mat-cols{padding:10px 0 8px;font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.mat-cols span:nth-child(n+2){text-align:right}
+.mat-row .art{display:grid;gap:4px;min-width:0}
+.mat-row .name{font-family:var(--sans);font-weight:600;line-height:1.35}
+.mat-row .why{font-family:var(--body);font-size:.92rem;color:var(--muted);line-height:1.55}
+.mat-row .qty,.mat-row .unit{font-family:var(--mono);font-size:.9rem;text-align:right;color:var(--muted);line-height:1.6}
+.mat-row .tot{display:grid;justify-items:end;gap:1px;text-align:right}
+.mat-row .tot b{font-family:var(--mono);font-weight:500;font-size:.98rem;line-height:1.5}
+.mat-row .tot small{font-family:var(--mono);font-size:.72rem;color:var(--muted);white-space:nowrap}
+@media (max-width:640px){
+  .mat-head{grid-template-columns:auto minmax(0,1fr)}
+  .mat-sum{grid-column:1 / -1;grid-row:3;justify-items:start;grid-auto-flow:column;align-items:baseline;justify-content:start;gap:10px}
+  .mat-head p{grid-column:1 / -1}
+  .mat-cols{display:none}
+  .mat-row{grid-template-columns:auto auto minmax(0,1fr);grid-template-areas:"art art art" "qty unit tot";gap:8px 6px}
+  .mat-row .art{grid-area:art}
+  .mat-row .qty{grid-area:qty;text-align:left}
+  .mat-row .qty::after{content:" ×"}
+  .mat-row .unit{grid-area:unit;text-align:left}
+  .mat-row .tot{grid-area:tot}
+}
+.rates .rate{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;margin-right:16px}
+.rates .rate span{margin-right:0}
+.credit{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px 24px}
+.credit a{color:var(--ink);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.credit a:hover{text-decoration-color:var(--accent)}
+.compare th.us{color:var(--accent)}
+.compare td.us{background:var(--accent-soft);font-weight:600}
+.punch{font-family:var(--display);font-weight:700;font-size:1.3rem;letter-spacing:-.01em;text-wrap:balance}
+
+.hero-top{display:block}
+.hero-text{display:grid;gap:18px}
+.hero .lead{max-width:none}
+
+/* ===== Schéma du rack ===== */
+.rk{margin:0;display:grid;gap:0;font-family:var(--sans);color:var(--rack-text);max-width:520px;width:100%}
+.rk-top{background:var(--rack-ear);border-radius:10px 10px 0 0;padding:14px 16px 10px;display:grid;grid-template-columns:auto auto 1fr;align-items:end;gap:10px 14px}
+.rk-obj{background:var(--rack);border-radius:6px;box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.rk-rode{width:120px;height:46px;padding:6px;display:grid;grid-template-columns:34px 1fr;gap:6px}
+.rk-screen{background:var(--rack-unit);border-radius:3px;border:1px solid var(--rack-dim)}
+.rk-faders{display:grid;grid-template-columns:repeat(6,1fr);gap:3px}
+.rk-faders i{background:var(--rack-unit);border-radius:2px;position:relative}
+.rk-faders i::after{content:"";position:absolute;left:-2px;right:-2px;height:5px;top:45%;background:var(--rack-dim);border-radius:1px}
+.rk-tab{width:62px;height:46px;padding:4px;border-radius:7px}
+.rk-tabscreen{height:100%;background:var(--rack-unit);border-radius:4px;display:flex;align-items:flex-end;padding:3px}
+.rk-tabscreen b{width:100%;text-align:center;font-size:.5rem;background:var(--tally);color:#fff;border-radius:2px;padding:1px 0}
+.rk-toplabel{font-size:.72rem;color:var(--rack-text);opacity:.75;line-height:1.3;align-self:center}
+.rk-body{background:var(--rack);padding:6px 0;display:grid;gap:3px;
+  --rail:30px}
+.rk-u{display:grid;grid-template-columns:var(--rail) minmax(0,1fr) var(--rail);min-height:calc(var(--u) * 46px)}
+.rk-u::after{content:"";background:var(--rack-ear) radial-gradient(circle,var(--rack) 2.2px,transparent 2.8px) center/100% 15.3px repeat-y}
+.rk-n{background:var(--rack-ear) radial-gradient(circle at 70% 50%,var(--rack) 2.2px,transparent 2.8px) right center/100% 15.3px repeat-y;font-family:var(--mono);font-size:.62rem;color:var(--rack-dim);display:flex;align-items:center;padding-left:4px}
+.rk-face{background:linear-gradient(180deg,var(--rack-unit),var(--rack));border:1px solid var(--rack-ear);border-radius:3px;margin:0 3px;padding:7px 12px;display:flex;align-items:center;justify-content:space-between;gap:12px;min-width:0}
+.rk-face.rk-key{box-shadow:inset 3px 0 0 var(--tally)}
+.rk-face.rk-blank{background:transparent;border-style:dashed}
+.rk-txt{display:grid;gap:1px;min-width:0}
+.rk-txt b{font-size:.84rem;font-weight:600;line-height:1.25}
+.rk-txt small{font-family:var(--mono);font-size:.66rem;color:var(--rack-dim);line-height:1.35}
+.rk-det{display:flex;align-items:center;gap:4px;flex:none}
+.p-hdmi{width:11px;height:6px;background:var(--rack);border:1px solid var(--rack-dim);border-radius:1px 1px 3px 3px}
+.p-xlr{width:12px;height:12px;border-radius:50%;background:var(--rack);border:1px solid var(--rack-dim)}
+.p-rj{width:9px;height:9px;background:var(--rack);border:1px solid var(--rack-dim);position:relative}
+.p-rj::after{content:"";position:absolute;top:-5px;left:2px;width:4px;height:3px;border-radius:1px;background:var(--ok)}
+.p-rj.off::after{background:var(--rack-ear)}
+.rk-btns{display:grid;grid-template-columns:repeat(8,9px);gap:4px}
+.rk-btns i{height:9px;border-radius:2px;background:var(--rack-ear)}
+.rk-btns i.on{background:var(--ok)}
+.rk-btns i.rec{background:var(--tally)}
+.rk-vent{width:80px;height:28px;background:repeating-linear-gradient(90deg,var(--rack) 0 3px,transparent 3px 7px);border-radius:2px;justify-content:flex-end;padding-right:2px}
+.rk-brush{width:120px;height:8px;background:repeating-linear-gradient(90deg,var(--rack-dim) 0 1px,transparent 1px 3px);opacity:.5;border-radius:2px}
+.p-out{width:12px;height:12px;border-radius:50%;background:var(--rack);border:1px solid var(--rack-dim);position:relative}
+.p-out::before,.p-out::after{content:"";position:absolute;top:4px;width:2px;height:3px;background:var(--rack-dim)}
+.p-out::before{left:2.5px}.p-out::after{right:2.5px}
+.rk-ups{gap:10px}
+.bat{width:46px;height:16px;border:1.5px solid var(--rack-dim);border-radius:3px;padding:2px;position:relative}
+.bat::after{content:"";position:absolute;right:-5px;top:4px;width:3px;height:6px;background:var(--rack-dim);border-radius:0 1px 1px 0}
+.bat i{display:block;height:100%;width:80%;background:var(--ok);border-radius:1px}
+.rk .led{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ok);box-shadow:0 0 6px var(--ok)}
+.rk-base{background:var(--rack-ear);height:14px;border-radius:0 0 6px 6px;display:flex;justify-content:space-between;padding:0 26px;position:relative;margin-bottom:16px}
+.rk-base i{width:18px;height:18px;border-radius:50%;background:var(--rack);border:3px solid var(--rack-ear);margin-top:8px}
+.rk-legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-family:var(--mono);font-size:.7rem;color:var(--muted);padding-top:4px}
+.rk-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;vertical-align:middle}
+.lg-ok{background:var(--ok)}.lg-rec{background:var(--tally)}
+@media (max-width:520px){
+  .rk-det{display:none}
+  .rk-top{grid-template-columns:auto auto;justify-content:start}
+  .rk-toplabel{grid-column:1 / -1}
+  .rk-body{--rail:24px}
+}
+</style>
+</head>
+<body>
+
+<header class="wrap hero">
+  <div class="hero-top">
+    <div class="hero-text">
+      <h1>Studio Autonome</h1>
+      <p class="lead">Un studio vidéo multicaméra que n'importe qui fait tourner avec un seul bouton, et qui produit en quelques heures des formats longs et des formats courts prêts à publier. C'est l'outil idéal pour alimenter chaque jour la communication d'un candidat en campagne.</p>
+    </div>
+  </div>
+  <dl class="meta">
+    <div><dt>Budget 1er studio</dt><dd class="num" id="f-budget">≈ 12 300 €</dd><dd class="sub-dd num" id="f-budget-mga"></dd></div>
+    <div><dt>Intervenants</dt><dd>2 à 3 (+1 invité)</dd></div>
+    <div><dt>Logiciel</dt><dd>60 jours</dd><dd class="sub-dd">après l'arrivée du matériel</dd></div>
+    <div><dt>Après une session d'1 h</dt><dd>1 long + 5 à 10 shorts</dd></div>
+    <div><dt>Version</dt><dd>1.0, 4 octobre 2026</dd></div>
+  </dl>
+</header>
+
+<div class="wrap layout">
+  <aside class="toc">
+    <details id="toc" open>
+      <summary><span class="toc-label">Sommaire</span><span class="toc-current" id="toc-current"></span></summary>
+      <ol>
+        <li><a href="#objectif"><span class="n">01</span>Objectif</a></li>
+        <li><a href="#campagne"><span class="n">02</span>Campagne</a></li>
+        <li><a href="#concept"><span class="n">03</span>Concept</a></li>
+        <li><a href="#session"><span class="n">04</span>Une session type</a></li>
+        <li><a href="#rack"><span class="n">05</span>Le rack</a></li>
+        <li><a href="#materiel"><span class="n">06</span>Matériel</a></li>
+        <li><a href="#logiciel"><span class="n">07</span>Logiciel</a></li>
+        <li><a href="#factory"><span class="n">08</span>Production factory</a></li>
+      </ol>
+    </details>
+  </aside>
+
+<main class="content">
+
+<section id="objectif">
+  <div class="head"><span class="artnum">01</span><h2>Le but : un studio comme celui-ci</h2></div>
+  <p>La référence est le Miroir Rack présenté par Micode : une salle quelconque devient un studio multicaméra que n'importe qui fait tourner, sans technicien. On veut le même résultat, avec du matériel standard et notre propre logiciel.</p>
+  <div class="video">
+    <iframe src="https://www.youtube-nocookie.com/embed/5eYR9Hjt6ak" title="Transformez n'importe quelle salle en studio IA (démo du Miroir Rack)" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+  </div>
+  <p class="note" id="file-warning" hidden><strong>Vidéo bloquée.</strong> YouTube refuse la lecture quand la page est ouverte comme fichier. Lance <code>python -m http.server 8000</code> dans ce dossier, puis ouvre http://localhost:8000/studio-autonome.html.</p>
+  <p class="caption">« Transformez n'importe quelle salle en studio IA (démo du Miroir Rack) », YouTube.</p>
+</section>
+
+<section id="campagne">
+  <div class="head"><span class="artnum">02</span><h2>Une machine à contenu pour une campagne</h2></div>
+  <p>Une campagne se joue aussi sur Facebook, TikTok et WhatsApp. Le candidat doit publier tous les jours, réagir vite à l'actualité et être présent dans toutes les régions. Ce studio produit des formats longs et des dizaines de formats courts par semaine, sans équipe de tournage ni monteur à plein temps.</p>
+  <div class="offers">
+    <div class="offer"><span class="tag">Rapidité</span><h3>Réagir le jour même</h3><p>Un entretien enregistré le matin donne un épisode monté environ une heure après STOP, puis les shorts sous-titrés dans la foulée. Le candidat répond à l'actualité avant ses adversaires.</p></div>
+    <div class="offer"><span class="tag">Volume</span><h3>Une session, dix contenus</h3><p>Une heure d'enregistrement donne un format long et 5 à 10 extraits courts. Les phrases fortes sont repérées automatiquement dans la transcription.</p></div>
+    <div class="offer"><span class="tag">Formats</span><h3>Long et court</h3><p>Long : présentation du programme, entretiens, débats, émission hebdomadaire, lives de questions-réponses. Court : vidéos verticales 9:16 pour Facebook Reels, TikTok et les statuts WhatsApp.</p></div>
+    <div class="offer"><span class="tag">Mobilité</span><h3>Le studio suit la tournée</h3><p>Le rack roule et se branche en une demi-journée. On peut l'installer au QG national, puis dans un QG régional le temps d'une tournée.</p></div>
+    <div class="offer"><span class="tag">Autonomie</span><h3>Aucun technicien</h3><p>L'équipe de campagne appuie sur un bouton. Coût fixe, pas de prestataire vidéo à payer à chaque tournage, pas d'attente.</p></div>
+    <div class="offer"><span class="tag">Maîtrise du message</span><h3>Rien ne sort sans validation</h3><p>Les fichiers restent sur le rack. Chaque vidéo est validée par l'équipe avant publication, et rien ne passe par un prestataire extérieur.</p></div>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Une semaine type</th><th>Enregistrement</th><th class="r">Contenus publiés</th></tr></thead>
+      <tbody>
+        <tr><td>Lundi : émission du candidat</td><td>45 min, 2 intervenants</td><td class="r">1 long + 8 shorts</td></tr>
+        <tr><td>Mercredi : live questions-réponses</td><td>1 h en direct sur Facebook</td><td class="r">1 live + 5 shorts</td></tr>
+        <tr><td>Vendredi : réaction à l'actualité</td><td>15 min</td><td class="r">1 long + 3 shorts</td></tr>
+        <tr><td>Samedi : invité (personnalité régionale)</td><td>40 min, 3 intervenants</td><td class="r">1 long + 6 shorts</td></tr>
+      </tbody>
+      <tfoot><tr><td colspan="2">Total de la semaine</td><td class="r">4 longs + 22 shorts</td></tr></tfoot>
+    </table>
+  </div>
+  <p class="caption">Sous-titres automatiques.</p>
+</section>
+
+<section id="concept">
+  <div class="head"><span class="artnum">03</span><h2>Trois briques, comme le Miroir Rack</h2></div>
+  <p>Le modèle est celui de Miroir (Micode) : un rack précâblé, une console de contrôle sans formation et un logiciel qui automatise toute la production. Ici, le matériel est standard et disponible, et toute l'intelligence est dans notre logiciel.</p>
+  <div class="flow">
+    <div class="box"><h3>Entrées</h3><ul><li>3 micros + 1 invité</li><li>4 caméras</li><li>PC / slides</li></ul></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box core"><h3>Rack + logiciel</h3><ul><li>Mélangeur ATEM ISO</li><li>Console audio multipiste</li><li>Mini-PC : orchestrateur, switch auto, live</li><li>Tablette « un bouton »</li></ul></div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="box"><h3>Sorties</h3><ul><li>Live YouTube / Facebook</li><li>Épisode monté</li><li>Sous-titres, chapitres</li><li>Shorts 9:16</li></ul></div>
+  </div>
+  <p>Trois principes guident les choix de matériel. <strong>Tout doit se piloter par le réseau</strong>, sinon on ne peut pas l'automatiser. <strong>Chaque caméra et chaque micro est enregistré séparément</strong>, sinon on ne peut pas remonter après coup. <strong>Le système enregistre même si le logiciel plante</strong> : l'ATEM et la console audio ont leurs propres sauvegardes.</p>
+</section>
+
+<section id="session">
+  <div class="head"><span class="artnum">04</span><h2>Une session type</h2></div>
+  <ol class="steps">
+    <li><div><strong>L'utilisateur choisit son émission sur la tablette</strong><span>Un preset par émission : nombre d'intervenants, plans, ambiance lumineuse, plateformes de diffusion.</span></div></li>
+    <li><div><strong>Il appuie sur START</strong><span>Lumières, caméras et écrans s'allument. L'auto-diagnostic vérifie les caméras, les niveaux micro, l'espace disque, le débit d'upload et l'onduleur (environ 30 secondes).</span></div></li>
+    <li><div><strong>L'enregistrement démarre, avec ou sans live</strong><span>Le plan change automatiquement selon qui parle. Voyant REC et chronomètre sur la tablette, alerte si un micro décroche.</span></div></li>
+    <li><div><strong>Il appuie sur STOP</strong><span>Les fichiers sont copiés et le pipeline de post-production démarre seul. Le studio s'éteint.</span></div></li>
+    <li><div><strong>Il reçoit son épisode</strong><span>Montage multicaméra, son normalisé, sous-titres, chapitres, description et 5 à 10 shorts, prêts à valider puis publier.</span></div></li>
+  </ol>
+</section>
+
+<section id="rack">
+  <div class="head"><span class="artnum">05</span><h2>Tout le système dans un meuble 10U à roulettes</h2></div>
+  <div class="rack-grid">
+    <figure class="rk" role="img" aria-label="Schéma du rack 10U vu de face, de haut en bas : console et tablette sur le dessus, panneau de connexion, switch, mélangeur ATEM, mini-PC, ventilation, multiprise, onduleur, roulettes">
+      <div class="rk-top">
+        <div class="rk-obj rk-rode"><div class="rk-screen"></div><div class="rk-faders"><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+        <div class="rk-obj rk-tab"><div class="rk-tabscreen"><b>STOP</b></div></div>
+        <span class="rk-toplabel">Sur le dessus : console audio Rodecaster et tablette de contrôle</span>
+      </div>
+      <div class="rk-body">
+        <div class="rk-u" style="--u:1"><span class="rk-n">10</span><div class="rk-face"><div class="rk-txt"><b>Panneau de connexion</b><small>HDMI ×5 · XLR ×4 · RJ45 · USB</small></div><div class="rk-det"><i class="p-hdmi"></i><i class="p-hdmi"></i><i class="p-hdmi"></i><i class="p-hdmi"></i><i class="p-hdmi"></i><i class="p-xlr"></i><i class="p-xlr"></i><i class="p-xlr"></i><i class="p-xlr"></i></div></div></div>
+        <div class="rk-u" style="--u:1"><span class="rk-n">9</span><div class="rk-face"><div class="rk-txt"><b>Switch réseau</b><small>8 ports, réseau de contrôle</small></div><div class="rk-det"><i class="p-rj"></i><i class="p-rj"></i><i class="p-rj"></i><i class="p-rj"></i><i class="p-rj"></i><i class="p-rj"></i><i class="p-rj off"></i><i class="p-rj off"></i></div></div></div>
+        <div class="rk-u" style="--u:2"><span class="rk-n">8–7</span><div class="rk-face rk-key"><div class="rk-txt"><b>Mélangeur ATEM Mini Extreme ISO</b><small>8 entrées caméra · enregistrement sur SSD 2 To</small></div><div class="rk-det rk-btns"><i></i><i class="on"></i><i></i><i></i><i></i><i></i><i></i><i></i><i class="rec"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div></div>
+        <div class="rk-u" style="--u:2"><span class="rk-n">6–5</span><div class="rk-face"><div class="rk-txt"><b>Mini-PC</b><small>Pilotage, détection de voix, live · alimentations caméras</small></div><div class="rk-det rk-vent"><i class="led"></i></div></div></div>
+        <div class="rk-u" style="--u:1"><span class="rk-n">4</span><div class="rk-face rk-blank"><div class="rk-txt"><small>Ventilation · passage des câbles</small></div><div class="rk-det rk-brush"></div></div></div>
+        <div class="rk-u" style="--u:1"><span class="rk-n">3</span><div class="rk-face"><div class="rk-txt"><b>Multiprise rack</b><small>8 prises pilotées à distance</small></div><div class="rk-det"><i class="p-out"></i><i class="p-out"></i><i class="p-out"></i><i class="p-out"></i><i class="p-out"></i><i class="p-out"></i><i class="p-out"></i><i class="p-out"></i></div></div></div>
+        <div class="rk-u" style="--u:2"><span class="rk-n">2–1</span><div class="rk-face"><div class="rk-txt"><b>Onduleur 1500 VA</b><small>Tient le studio pendant un délestage</small></div><div class="rk-det rk-ups"><span class="bat"><i></i></span><i class="led"></i></div></div></div>
+      </div>
+      <div class="rk-base"><i></i><i></i></div>
+      <figcaption class="rk-legend"><span><i class="lg-ok"></i>sous tension</span><span><i class="lg-rec"></i>enregistrement</span><span>1U = 4,45 cm</span></figcaption>
+    </figure>
+    <div class="rack-notes">
+      <p><strong>Pourquoi un rack.</strong> On installe une seule machine, et non une table couverte de boîtiers. Le câblage interne est fait une fois. L'installation se résume à brancher les caméras et les micros sur la façade, soit une demi-journée au lieu de deux jours. Le studio peut donc suivre une tournée.</p>
+      <p><strong>Pourquoi un panneau en façade.</strong> Personne n'ouvre l'arrière du rack. Un câble arraché se remplace par l'avant, et personne ne peut rien débrancher par erreur à l'intérieur.</p>
+      <p><strong>Pourquoi l'onduleur en bas.</strong> C'est l'élément le plus lourd : en bas, le rack reste stable sur ses roulettes. Il protège tout ce qui est au-dessus, box internet comprise.</p>
+      <p><strong>Pourquoi la console sur le plateau.</strong> Le Rodecaster a un écran et des faders qu'on touche parfois, et la tablette Deck doit être à portée de main.</p>
+    </div>
+  </div>
+</section>
+
+<section id="materiel">
+  <div class="head"><span class="artnum">06</span><h2>Liste d'achat du premier studio</h2></div>
+  <p>Prix de référence du matériel neuf sur le marché européen, convertis en yuan et en ariary, à vérifier au moment de commander.</p>
+  <div class="rates">
+    <span class="rate"><label for="rate-cny">1 € =</label><input id="rate-cny" type="number" step="0.01" min="0" value="7.75"><span>¥ (CNY)</span></span>
+    <span class="rate"><label for="rate-mga">1 € =</label><input id="rate-mga" type="number" step="10" min="0" value="4920"><span>Ar (MGA)</span></span>
+    <small>Taux indicatifs de septembre 2026, modifiables.</small>
+  </div>
+  <div id="cats" class="mat"></div>
+  <div class="total">
+    <span class="label">Total matériel</span>
+    <span class="amount num" id="grand-total">—</span>
+    <span class="fx num" id="grand-fx"></span>
+    <p>Pour réduire le total, utiliser les leviers ci-dessous.</p>
+  </div>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Levier si le budget est serré</th><th>Ce qu'on perd</th><th class="r">Économie</th></tr></thead>
+      <tbody>
+        <tr><td>Rode PodMic à la place des SM7B</td><td>Un peu de rendu, et l'effet « micro de pro » en démo</td><td class="r">≈ −870 €</td></tr>
+        <tr><td>ATEM Mini Pro ISO à la place de l'Extreme ISO</td><td>4 entrées seulement : plus de place pour un PC ni un invité à distance</td><td class="r">≈ −500 €</td></tr>
+        <tr><td>Panneaux et bass traps fabriqués à Madagascar par un menuisier (laine de roche, cadre bois, tissu)</td><td>Rien sur le résultat, juste quelques jours de fabrication</td><td class="r">Selon devis local</td></tr>
+        <tr><td>Onduleur classique posé au fond du rack</td><td>Montage moins propre</td><td class="r">≈ −250 €</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="logiciel">
+  <div class="head"><span class="artnum">07</span><h2>Ce qu'il faut développer</h2></div>
+  <p>C'est le cœur du projet. Tout le logiciel est développé par Tolotra et sera prêt <strong>60 jours après l'arrivée du matériel</strong>, tests sur matériel réel compris.</p>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Module</th><th>Ce qu'il fait</th></tr></thead>
+      <tbody id="modules"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="factory">
+  <div class="head"><span class="artnum">08</span><h2>Au final : votre propre usine à vidéos, avec peu de moyens</h2></div>
+  <p>Aujourd'hui, une vidéo de qualité demande une équipe entière et plusieurs jours d'attente. Avec ce studio, une personne s'assoit, appuie sur un bouton et parle. Une heure plus tard, la vidéo est prête, avec ses sous-titres, et une dizaine de petites vidéos pour TikTok et Facebook sont déjà découpées. Pas besoin de savoir filmer ni de savoir monter : le studio s'occupe de tout.</p>
+  <div class="tbl compare">
+    <table>
+      <thead><tr><th></th><th>Sans le studio</th><th class="us">Avec le studio</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Qui faut-il ?</strong></td><td>4 à 5 professionnels : caméraman, technicien son, réalisateur, monteur</td><td class="us">Une seule personne, sans formation</td></tr>
+        <tr><td><strong>Compétences techniques</strong></td><td>Indispensables</td><td class="us">Aucune : un bouton suffit</td></tr>
+        <tr><td><strong>Quand la vidéo est-elle prête ?</strong></td><td>Plusieurs jours après</td><td class="us">Environ une heure après</td></tr>
+        <tr><td><strong>Petites vidéos pour les réseaux sociaux</strong></td><td>Découpées à la main, une par une</td><td class="us">5 à 10 créées automatiquement</td></tr>
+        <tr><td><strong>Combien ça coûte ?</strong></td><td>On paie à chaque vidéo</td><td class="us">Le studio est payé une fois, on filme autant qu'on veut</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="punch">Plus de vidéos, plus vite, pour beaucoup moins cher.</p>
+</section>
+
+<footer class="credit"><span>Studio Autonome · version 1.0 du 4 octobre 2026. Prix indicatifs.</span><span>Document réalisé par Tolotra · <a href="https://tolotra.dev" target="_blank" rel="noopener">tolotra.dev</a></span></footer>
+</main>
+</div>
+
+<script>
+const CATS = [
+  { id:"audio", title:"Audio", intro:"Une piste séparée par micro : sans ça, ni switch automatique ni montage automatique.", items:[
+    ["Shure SM7B", 3, 390, "Micro dynamique de référence : il capte la voix et rejette la pièce."],
+    ["Rodecaster Pro II", 1, 690, "Envoie une piste par micro en USB au mini-PC (indispensable pour la détection de voix). Préamplis assez puissants pour les SM7B, sauvegarde sur carte SD, 4e entrée pour un invité."],
+    ["Bras de micro articulés", 3, 50, "Le micro reste près de la bouche sans gêner le cadre de la caméra."],
+    ["Casques fermés (DT 770 Pro)", 3, 100, "Chaque intervenant s'entend, et le son du casque ne repart pas dans les micros."],
+    ["Câbles XLR 5 m", 4, 15, "Micros vers le panneau de façade du rack."],
+  ]},
+  { id:"video", title:"Vidéo", intro:"4 caméras : un plan large et un plan serré par intervenant.", items:[
+    ["Blackmagic ATEM Mini Extreme ISO", 1, 1450, "Le cœur du système. 8 entrées HDMI, switch en live, enregistrement séparé de chaque caméra déjà synchronisé, pilotable par le réseau. Les 8 entrées laissent de la place pour un PC et un invité à distance."],
+    ["Sony ZV-E10 II, boîtier nu", 3, 900, "Caméras des plans serrés. Sortie HDMI propre, fonctionne sur secteur, bon autofocus visage. Format courant, facile à remplacer."],
+    ["Sony ZV-E10 II, kit 16-50 mm", 1, 1050, "Caméra du plan large : le zoom du kit couvre toute la table."],
+    ["Objectifs Sigma 30 mm f/1.4", 3, 335, "Plans serrés avec fond flou, l'effet « pro ». Lumineux, donc on a besoin de moins de lumière."],
+    ["Batteries factices + alimentation secteur", 4, 25, "Des sessions de plusieurs heures sans changer de batterie."],
+    ["Câbles HDMI 10 m + adaptateurs micro-HDMI", 4, 20, "Caméras vers la façade du rack."],
+    ["Pieds ou bras de fixation caméra", 4, 35, "Cadres fixes et identiques d'une session à l'autre."],
+    ["SSD Samsung T7 2 To", 1, 170, "Support d'enregistrement de l'ATEM. Les fichiers sont ensuite copiés sur le mini-PC."],
+  ]},
+  { id:"light", title:"Lumière", intro:"Les intensités se règlent une fois. Seule l'ambiance de fond change selon l'émission.", items:[
+    ["Amaran 100x S + lanterne ou softbox", 2, 260, "Key light et fill light : lumière douce et flatteuse, température réglable."],
+    ["Pieds de lumière", 2, 40, "Pieds de lumière (pas toujours livrés avec)."],
+    ["Kit ambiance WLED (ESP32 + ruban LED + alimentation)", 2, 40, "Fond coloré piloté par API : une ambiance différente par émission."],
+  ]},
+  { id:"acoustic", title:"Acoustique", intro:"C'est le poste le plus rentable : une pièce traitée vaut mieux qu'un micro plus cher.", items:[
+    ["Panneaux absorbants 60×60 cm", 12, 30, "Coupent la résonance de la pièce. Peuvent être fabriqués à Madagascar (laine de roche, cadre bois, tissu)."],
+    ["Bass traps d'angle", 4, 30, "Absorbent les basses, qui s'accumulent dans les coins."],
+    ["Tapis épais 2×3 m", 1, 150, "Absorbe les réflexions du sol, très présentes avec un carrelage."],
+  ]},
+  { id:"rack", title:"Rack, contrôle et infrastructure", intro:"Ce qui transforme un tas de matériel en un produit qu'on installe en une demi-journée.", items:[
+    ["Rack mobile 10U à roulettes", 1, 180, "Tout le système dans un seul meuble, déplaçable."],
+    ["Tablettes de rack", 2, 30, "Pour l'ATEM et le mini-PC, qui ne sont pas au format rack."],
+    ["Onduleur rack 1500 VA", 1, 500, "Délestages : protège les fichiers et les SSD, et maintient le live quelques minutes."],
+    ["Multiprise rack (PDU)", 1, 50, "Alimentation propre et fixée de chaque appareil."],
+    ["Switch Ethernet 8 ports", 1, 40, "Réseau de contrôle : ATEM, mini-PC, tablette, prises, lumières."],
+    ["Panneau de connexion façade (HDMI, XLR, RJ45, USB)", 1, 120, "Tout se branche par l'avant, et le câblage interne n'est fait qu'une fois."],
+    ["Prises connectées Shelly", 4, 25, "Allumage et extinction automatiques des caméras et lumières au START / STOP."],
+    ["Mini-PC (Ryzen 7 ou Core Ultra, 32 Go, 1 To)", 1, 600, "Fait tourner l'orchestrateur, la détection de voix et OBS pour le live. La transcription lourde peut tourner sur un autre poste."],
+    ["Tablette 10\" + support (Deck)", 1, 230, "L'interface « un bouton »."],
+    ["Câbles, velcro, visserie", 1, 60, "Câbles, velcro et visserie pour un câblage propre."],
+  ]},
+];
+
+const MODULES = [
+  ["Orchestrateur et pilotage matériel", "Machine à états (repos, préparation, enregistrement, arrêt, ingestion), pilotage ATEM, OBS, Shelly et WLED, auto-diagnostic au démarrage."],
+  ["Détection de voix et switch automatique", "Lecture des pistes du Rodecaster, détection de qui parle, règles de switch (durée minimale d'un plan, plan large en cas de chevauchement ou de silence)."],
+  ["Deck (interface tablette)", "Presets d'émission, START / STOP / LIVE, diagnostic visuel, voyant REC, alertes."],
+  ["Live", "Scènes OBS, habillage propre à chaque émission, diffusion multiplateforme via Restream, repli en 720p."],
+  ["Pipeline de post-production", "Ingestion, synchronisation audio et vidéo, recoupe automatique, export OpenTimelineIO vers Resolve, normalisation à -16 LUFS."],
+  ["IA contenu", "Transcription Whisper, sous-titres, chapitres, titre et description, sélection et recadrage 9:16 des shorts."],
+  ["Livraison des épisodes", "Portail ou dossier partagé, notification à la fin du traitement, publication YouTube et RSS après validation."],
+  ["Supervision à distance", "Accès VPN au rack, logs, alertes, mises à jour à distance, pour intervenir sans se déplacer."],
+  ["Tests et stabilisation", "Épisodes réels, tests de coupure de courant et de réseau, documentation d'installation."],
+];
+
+if (location.protocol === "file:") document.getElementById("file-warning").hidden = false;
+
+const eur = n => new Intl.NumberFormat("fr-FR").format(n) + " €";
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+const fmt = n => new Intl.NumberFormat("fr-FR").format(n);
+const rate = id => { const v = parseFloat(document.getElementById(id).value); return v > 0 ? v : 0; };
+const fx = e => `${fmt(Math.round(e * rate("rate-cny")))} ¥ · ${fmt(Math.round(e * rate("rate-mga") / 1000) * 1000)} Ar`;
+
+function renderMaterial() {
+  let grand = 0;
+  const cny = e => fmt(Math.round(e * rate("rate-cny"))) + " ¥";
+  const mga = e => fmt(Math.round(e * rate("rate-mga") / 1000) * 1000) + " Ar";
+  document.getElementById("cats").innerHTML = CATS.map((c, i) => {
+    const sum = c.items.reduce((a, [, q, p]) => a + q * p, 0);
+    grand += sum;
+    return `<article class="mat-cat" aria-labelledby="cat-${c.id}">
+      <header class="mat-head">
+        <span class="mat-num">6.${i + 1}</span>
+        <h3 id="cat-${c.id}">${c.title}</h3>
+        <div class="mat-sum"><b class="num">${eur(sum)}</b><small class="num">${cny(sum)} · ${mga(sum)}</small></div>
+        <p>${esc(c.intro)}</p>
+      </header>
+      <div class="mat-rows" role="table" aria-label="${esc(c.title)}">
+        <div class="mat-row mat-cols" role="row"><span role="columnheader">Article</span><span role="columnheader">Qté</span><span role="columnheader">Prix unit.</span><span role="columnheader">Total</span></div>
+        ${c.items.map(([n, q, p, w]) => `<div class="mat-row" role="row">
+          <div class="art" role="cell"><span class="name">${esc(n)}</span><p class="why">${esc(w)}</p></div>
+          <span class="qty num" role="cell">${q}</span>
+          <span class="unit num" role="cell">${eur(p)}</span>
+          <div class="tot" role="cell"><b class="num">${eur(q * p)}</b><small class="num">${cny(q * p)}</small><small class="num">${mga(q * p)}</small></div>
+        </div>`).join("")}
+      </div>
+    </article>`;
+  }).join("");
+  document.getElementById("grand-total").textContent = eur(grand);
+  document.getElementById("grand-fx").textContent = fx(grand);
+  document.getElementById("f-budget").textContent = "≈ " + eur(Math.round(grand / 100) * 100);
+  document.getElementById("f-budget-mga").textContent = "≈ " + fmt(Math.round(grand * rate("rate-mga") / 1e5) / 10) + " M Ar";
+}
+renderMaterial();
+["rate-cny", "rate-mga"].forEach(id => document.getElementById(id).addEventListener("input", renderMaterial));
+
+document.getElementById("modules").innerHTML = MODULES.map(([n, d]) =>
+  `<tr><td><strong>${esc(n)}</strong></td><td>${esc(d)}</td></tr>`).join("");
+
+// Sommaire : section active + comportement mobile
+(() => {
+  const toc = document.getElementById("toc");
+  const current = document.getElementById("toc-current");
+  const links = [...toc.querySelectorAll("a")];
+  const mq = window.matchMedia("(max-width: 900px)");
+  const sync = () => { toc.open = !mq.matches; };
+  sync();
+  mq.addEventListener("change", sync);
+  toc.querySelector("summary").addEventListener("click", e => { if (!mq.matches) e.preventDefault(); });
+  links.forEach(a => a.addEventListener("click", () => { if (mq.matches) toc.open = false; }));
+
+  const setActive = id => {
+    links.forEach(a => {
+      const on = a.getAttribute("href") === "#" + id;
+      a.classList.toggle("active", on);
+      if (on) current.textContent = a.textContent.replace(/^\d+/, "").trim();
+    });
+  };
+  const sections = links.map(a => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+  const onScroll = () => {
+    let id = sections[0].id;
+    for (const sec of sections) if (sec.getBoundingClientRect().top < 120) id = sec.id;
+    if (window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 4) id = sections[sections.length - 1].id;
+    setActive(id);
+  };
+  setActive(sections[0].id);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+</body>
+</html>
